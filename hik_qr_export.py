@@ -13,8 +13,11 @@ def decode(qr_string):
     qr_code_data = QrCodeData.from_qr_string(qr_string)
     click.echo(f'Data header: {qr_code_data.header}')
     click.echo(f'Password used: {qr_code_data.e2e_password}')
-    click.echo(f'QR code generated at: {qr_code_data.timestamp_created} '
-               f'({datetime.datetime.fromtimestamp(qr_code_data.timestamp_created).isoformat()})')
+    if qr_code_data.timestamp_created:
+        click.echo(f'QR code generated at: {qr_code_data.timestamp_created} '
+                   f'({datetime.datetime.fromtimestamp(qr_code_data.timestamp_created).isoformat()})')
+    else:
+        click.echo(f'QR code has no timestamp part!', err=True)
     for local_device in qr_code_data.local_devices:
         click.echo()
         click.echo(f'Device Name: {local_device.name}')
@@ -30,8 +33,11 @@ def decode(qr_string):
 def renew(qr_string, quiet, timestamp):
     qr_code_data = QrCodeData.from_qr_string(qr_string)
     if not quiet:
-        click.echo(f'QR code generated at: {qr_code_data.timestamp_created} '
-                   f'({datetime.datetime.fromtimestamp(qr_code_data.timestamp_created).isoformat()})')
+        if qr_code_data.timestamp_created:
+            click.echo(f'QR code generated at: {qr_code_data.timestamp_created} '
+                       f'({datetime.datetime.fromtimestamp(qr_code_data.timestamp_created).isoformat()})')
+        else:
+            click.echo(f'QR code has no timestamp part!', err=True)
     if timestamp is None:
         qr_code_data.renew()
     else:

@@ -2,14 +2,14 @@ import base64
 import datetime
 import zlib
 
-from errors import InvalidLengthError
+from errors import InvalidLengthError, MalformedQRStringError
 from hik_aes import HikAES
 from local_device import LocalDevice
 
 
 class QrCodeData:
     _e2e_password: str
-    _timestamp_created: int
+    _timestamp_created: int|None
     _local_devices: [LocalDevice]
 
     def __init__(
@@ -33,9 +33,18 @@ class QrCodeData:
 
         decompressed_data = zlib.decompress(base64.b64decode(compressed_data_b64)).decode()
 
-        e2e_password_enc_b64, local_devices_str, timestamp_created_enc = decompressed_data.split(':')
+        decompressed_data_list = decompressed_data.split(':')
+
+        if len(decompressed_data_list) == 2:
+            e2e_password_enc_b64, local_devices_str = decompressed_data_list
+            timestamp_created = None
+        elif len(decompressed_data_list) == 3:
+            e2e_password_enc_b64, local_devices_str, timestamp_created_enc = decompressed_data_list
+            timestamp_created = int(HikAES().decrypt_b64_to_str(timestamp_created_enc).rstrip('\x00'))
+        else:
+            raise MalformedQRStringError
+
         e2e_password = HikAES().decrypt_b64_to_str(e2e_password_enc_b64).rstrip('\x00')
-        timestamp_created = int(HikAES().decrypt_b64_to_str(timestamp_created_enc).rstrip('\x00'))
 
         local_devices = []
         for local_device_encoded in local_devices_str.split('$'):
@@ -57,13 +66,18 @@ class QrCodeData:
 
     def encode(self) -> str:
         local_devices_str = '$'.join(local_device.encode() for local_device in self._local_devices) + '$'
-        compressed_data_b64 = base64.b64encode(zlib.compress(
-            ':'.join([
-                HikAES().encrypt_str_to_b64(self._e2e_password.ljust(16, '\x00')),
-                local_devices_str,
-                HikAES().encrypt_str_to_b64(str(self._timestamp_created).ljust(16, '\x00')),
-            ]).encode()
-        )).decode()
+
+        data_to_merge_list = [
+            HikAES().encrypt_str_to_b64(self._e2e_password.ljust(16, '\x00')),
+            local_devices_str
+        ]
+
+        if self._timestamp_created:
+            data_to_merge_list.append(
+                HikAES().encrypt_str_to_b64(str(self._timestamp_created).ljust(16, '\x00'))
+            )
+
+        compressed_data_b64 = base64.b64encode(zlib.compress(':'.join(data_to_merge_list).encode())).decode()
         return f'{self._header}{compressed_data_b64}'
 
     @property
@@ -79,7 +93,7 @@ class QrCodeData:
         return self._header
 
     @property
-    def timestamp_created(self) -> int:
+    def timestamp_created(self) -> int|None:
         return self._timestamp_created
 
     @timestamp_created.setter

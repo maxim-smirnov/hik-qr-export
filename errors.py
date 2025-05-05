@@ -6,3 +6,6 @@ class InvalidLengthError(HikError, ValueError):
 
 class MalformedDeviceDataError(HikError, ValueError):
     pass
+
+class MalformedQRStringError(HikError, ValueError):
+    pass
