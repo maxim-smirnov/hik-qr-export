@@ -8,7 +8,7 @@ from local_device import LocalDevice
 
 
 class QrCodeData:
-    _e2e_password: str
+    _e2e_password: str|None
     _timestamp_created: int|None
     _local_devices: [LocalDevice]
 
@@ -28,23 +28,33 @@ class QrCodeData:
 
     @classmethod
     def from_qr_string(cls, qr_string: str) -> 'QrCodeData':
-        header = qr_string[:11]
-        compressed_data_b64 = qr_string[11:]
+        if qr_string.startswith('iVMS'):
+            header_len = 12
+        else:
+            header_len = 11
 
+        header = qr_string[:header_len]
+        compressed_data_b64 = qr_string[header_len:]
         decompressed_data = zlib.decompress(base64.b64decode(compressed_data_b64)).decode()
-
         decompressed_data_list = decompressed_data.split(':')
 
-        if len(decompressed_data_list) == 2:
-            e2e_password_enc_b64, local_devices_str = decompressed_data_list
+        if len(decompressed_data_list) == 1:
+            local_devices_str = decompressed_data_list[0]
+
             timestamp_created = None
+            e2e_password = None
+        elif len(decompressed_data_list) == 2:
+            e2e_password_enc_b64, local_devices_str = decompressed_data_list
+
+            timestamp_created = None
+            e2e_password = HikAES().decrypt_b64_to_str(e2e_password_enc_b64).rstrip('\x00')
         elif len(decompressed_data_list) == 3:
             e2e_password_enc_b64, local_devices_str, timestamp_created_enc = decompressed_data_list
+
             timestamp_created = int(HikAES().decrypt_b64_to_str(timestamp_created_enc).rstrip('\x00'))
+            e2e_password = HikAES().decrypt_b64_to_str(e2e_password_enc_b64).rstrip('\x00')
         else:
             raise MalformedQRStringError
-
-        e2e_password = HikAES().decrypt_b64_to_str(e2e_password_enc_b64).rstrip('\x00')
 
         local_devices = []
         for local_device_encoded in local_devices_str.split('$'):
@@ -81,7 +91,7 @@ class QrCodeData:
         return f'{self._header}{compressed_data_b64}'
 
     @property
-    def e2e_password(self) -> str:
+    def e2e_password(self) -> str|None:
         return self._e2e_password
 
     @property

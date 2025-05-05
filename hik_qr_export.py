@@ -12,7 +12,10 @@ def cli():
 def decode(qr_string):
     qr_code_data = QrCodeData.from_qr_string(qr_string)
     click.echo(f'Data header: {qr_code_data.header}')
-    click.echo(f'Password used: {qr_code_data.e2e_password}')
+    if qr_code_data.e2e_password:
+        click.echo(f'Password used: {qr_code_data.e2e_password}')
+    else:
+        click.echo('QR code has no password part!', err=True)
     if qr_code_data.timestamp_created:
         click.echo(f'QR code generated at: {qr_code_data.timestamp_created} '
                    f'({datetime.datetime.fromtimestamp(qr_code_data.timestamp_created).isoformat()})')
