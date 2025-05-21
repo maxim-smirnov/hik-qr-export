@@ -51,5 +51,35 @@ def renew(qr_string, quiet, timestamp):
     click.echo(qr_code_data.encode())
 
 
+import sys
+
 if __name__ == '__main__':
-    cli()
+    if len(sys.argv) == 1:
+        # No arguments provided, prompt user to paste encrypted string repeatedly
+        while True:
+            qr_string = input("Paste the encrypted QR string to decode (or press Enter to exit): ").strip()
+            if not qr_string:
+                print("No input provided. Exiting.")
+                break
+            # Call decode logic directly
+            qr_code_data = QrCodeData.from_qr_string(qr_string)
+            print(f'Data header: {qr_code_data.header}')
+            if qr_code_data.e2e_password:
+                print(f'Password used: {qr_code_data.e2e_password}')
+            else:
+                print('QR code has no password part!', file=sys.stderr)
+            if qr_code_data.timestamp_created:
+                import datetime
+                print(f'QR code generated at: {qr_code_data.timestamp_created} '
+                      f'({datetime.datetime.fromtimestamp(qr_code_data.timestamp_created).isoformat()})')
+            else:
+                print('QR code has no timestamp part!', file=sys.stderr)
+            for local_device in qr_code_data.local_devices:
+                print()
+                print(f'Device Name: {local_device.name}')
+                print(f'IP Address: {local_device.ip_address}')
+                print(f'Port: {local_device.port}')
+                print(f'Username: {local_device.username}')
+                print(f'Password: {local_device.password}')
+    else:
+        cli()
