@@ -27,7 +27,7 @@ class LocalDevice:
             name_b64, _, ip_address_b64, port, _, username_enc_b64, password_enc_b64 = ampersand_string.split('&')
         except ValueError:
             raise MalformedDeviceDataError(
-                f'not enough fields in ampersand string (expected 7, got {ampersand_string.count('&')})'
+                f"not enough fields in ampersand string (expected 7, got {ampersand_string.count('&')})"
             )
         username = HikAES().decrypt_b64_to_str(username_enc_b64).rstrip('\x00')
         password = HikAES().decrypt_b64_to_str(password_enc_b64).rstrip('\x00')
