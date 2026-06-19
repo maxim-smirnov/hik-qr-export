@@ -16,7 +16,7 @@ class QrCodeData:
             self,
             e2e_password: str,
             local_devices: [LocalDevice],
-            header: str = 'QRC03010003',
+            header: str = 'QRC03010002',
             timestamp_created: int = int(datetime.datetime.now().timestamp())
     ):
         if len(e2e_password) > 16:

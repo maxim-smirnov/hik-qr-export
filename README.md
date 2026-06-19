@@ -8,7 +8,7 @@ $ git clone git@github.com:maxim-smirnov/hik-qr-export.git
 $ cd hik-qr-export
 $ python3 -m venv venv  # Create new virtual environment
 $ source venv/bin/activate  # Activate venv
-$ pip install -r requirements.txt  # Install requirements 
+$ pip install -r requirements.txt  # Install requirements
 $ python hik_qr_export.py --help
 Usage: hik_qr_export.py [OPTIONS] COMMAND [ARGS]...
 
@@ -18,6 +18,11 @@ Options:
 Commands:
   decode  Decode QR code data, extract metadata and stored devices.
   renew   Renew QR code.
+```
+
+### Additional
+```bash
+$ pip install Pillow zxing-cpp  # Only if you want to use a QR image from clipboard
 ```
 
 # What and why?
