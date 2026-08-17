@@ -18,11 +18,34 @@ Options:
 Commands:
   decode  Decode QR code data, extract metadata and stored devices.
   renew   Renew QR code.
+$ python hik_qr_export.py decode --help
+Usage: hik_qr_export.py decode [OPTIONS] [QR_STRING]
+
+  Decode QR code data, extract metadata and stored devices.
+
+Options:
+  -c, --clipboard  Read QR code image from macOS clipboard.
+  --help           Show this message and exit.
+$ python hik_qr_export.py renew --help
+Usage: hik_qr_export.py renew [OPTIONS] [QR_STRING]
+
+  Renew QR code.
+
+Options:
+  -c, --clipboard      Read QR code image from macOS clipboard.
+  -q, --quiet          Suppress printing timestamps.
+  --timestamp INTEGER  Specify exact timestamp to use.
+  --help               Show this message and exit.
 ```
 
 ### Additional
+Both `decode` and `renew` can take the QR code image from the macOS clipboard
+with `-c`/`--clipboard` instead of the QR string argument. Just make a screenshot
+of the QR code before running the command.
 ```bash
 $ pip install Pillow zxing-cpp  # Only if you want to use a QR image from clipboard
+$ python hik_qr_export.py decode -c
+$ python hik_qr_export.py renew -c
 ```
 
 # What and why?

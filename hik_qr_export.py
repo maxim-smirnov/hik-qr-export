@@ -35,6 +35,15 @@ def _read_qr_from_clipboard() -> str:
     return qr_codes[0].text
 
 
+def _resolve_qr_string(qr_string: str | None, clipboard: bool) -> str:
+    """Take the QR code text either from the command argument or from the clipboard."""
+    if clipboard:
+        return _read_qr_from_clipboard()
+    if qr_string is None:
+        raise click.UsageError('Provide a QR string argument or use -c/--clipboard.')
+    return qr_string
+
+
 @click.group()
 def cli():
     pass
@@ -43,12 +52,7 @@ def cli():
 @click.argument('qr_string', required=False, default=None)
 @click.option('-c', '--clipboard', is_flag=True, default=False, help='Read QR code image from macOS clipboard.')
 def decode(qr_string: str | None, clipboard: bool) -> None:
-    if clipboard:
-        qr_string = _read_qr_from_clipboard()
-    elif qr_string is None:
-        raise click.UsageError('Provide a QR string argument or use -c/--clipboard.')
-
-    qr_code_data = QrCodeData.from_qr_string(qr_string)
+    qr_code_data = QrCodeData.from_qr_string(_resolve_qr_string(qr_string, clipboard))
     click.echo(f'Data header: {qr_code_data.header}')
     if qr_code_data.e2e_password:
         click.echo(f'Password used: {qr_code_data.e2e_password}')
@@ -68,11 +72,12 @@ def decode(qr_string: str | None, clipboard: bool) -> None:
         click.echo(f'Password: {local_device.password}')
 
 @cli.command(help='Renew QR code.')
-@click.argument('qr_string')
+@click.argument('qr_string', required=False, default=None)
+@click.option('-c', '--clipboard', is_flag=True, default=False, help='Read QR code image from macOS clipboard.')
 @click.option('-q', '--quiet', default=False, is_flag=True, help='Suppress printing timestamps.')
 @click.option('--timestamp', default=None, type=click.INT, help='Specify exact timestamp to use.')
-def renew(qr_string, quiet, timestamp):
-    qr_code_data = QrCodeData.from_qr_string(qr_string)
+def renew(qr_string, clipboard, quiet, timestamp):
+    qr_code_data = QrCodeData.from_qr_string(_resolve_qr_string(qr_string, clipboard))
     if not quiet:
         if qr_code_data.timestamp_created:
             click.echo(f'QR code generated at: {qr_code_data.timestamp_created} '
