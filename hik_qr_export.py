@@ -1,5 +1,6 @@
 import click
 import datetime
+from errors import HikError
 from qr_code_data import QrCodeData
 
 
@@ -85,7 +86,10 @@ def renew(qr_string, quiet, timestamp):
     if not quiet:
         click.echo(f'New timestamp of QR creation is: {qr_code_data.timestamp_created} '
                    f'({datetime.datetime.fromtimestamp(qr_code_data.timestamp_created).isoformat()})')
-    click.echo(qr_code_data.encode())
+    try:
+        click.echo(qr_code_data.encode())
+    except HikError as error:
+        raise click.ClickException(str(error))
 
 
 if __name__ == '__main__':

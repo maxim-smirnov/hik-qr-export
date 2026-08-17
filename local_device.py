@@ -26,12 +26,14 @@ class LocalDevice:
         self._password = password
 
     @classmethod
-    def from_encoded(cls, ampersand_string: str) -> 'LocalDevice':
+    def from_encoded(cls, encoded_string: str, field_separator: str = '&') -> 'LocalDevice':
         try:
-            name_b64, _, ip_address_b64, port, _, username_enc_b64, password_enc_b64 = ampersand_string.split('&')
+            (name_b64, _, ip_address_b64, port,
+             _, username_enc_b64, password_enc_b64) = encoded_string.split(field_separator)
         except ValueError:
             raise MalformedDeviceDataError(
-                f'not enough fields in ampersand string (expected 7, got {ampersand_string.count("&")})'
+                f'wrong fields count in encoded device string '
+                f'(expected 7, got {encoded_string.count(field_separator) + 1})'
             )
         username = HikAES().decrypt_b64_to_str(username_enc_b64).rstrip('\x00')
         password = HikAES().decrypt_b64_to_str(password_enc_b64).rstrip('\x00')
@@ -49,10 +51,10 @@ class LocalDevice:
         padded_len = ((len(value) + block_size - 1) // block_size) * block_size
         return value.ljust(padded_len, '\x00')
 
-    def encode(self) -> str:
+    def encode(self, field_separator: str = '&') -> str:
         username_padded = self._pad_to_block(self._username)
         password_padded = self._pad_to_block(self._password)
-        return '&'.join([
+        return field_separator.join([
             base64.b64encode(self._name.encode('utf-8')).decode(),
             '0',  # Always 0 in my cases (maybe device type)
             base64.b64encode(self._ip_address.encode('utf-8')).decode(),

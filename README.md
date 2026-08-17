@@ -183,3 +183,51 @@ Port: 8000
 Username: admin
 Password: admin
 ```
+
+## Another separators flavour
+
+Some QR codes exported from a device itself and not from the app use another pair
+of separators for the very same structure: `;` instead of `$` between devices and
+`,` instead of `&` between device fields. Such headers are `QRC01010001` for a
+camera export and `DVR/NVR010001` for a DVR/NVR export.
+
+Such QR codes usually have neither the export password nor the timestamp part,
+so there are no `:` separators inside at all. It's the very same dummy camera
+as above, but the whole decompressed data is now just:
+
+```
+Y2FtZXJh,0,MTkyLjE2OC4xLjE=,8000,,ct1m4d7TxSCJH2bHiWjSRA==,ct1m4d7TxSCJH2bHiWjSRA==;
+```
+
+Both examples below are synthetic ones, created for a dummy camera and
+a dummy DVR with this program itself:
+
+```bash
+$ python hik_qr_export.py decode 'QRC01010001eJyLNHIriYrwytAx0PENya70yXI18nc2qQDStjoWBgYGOjrJJYa5JinmIRXBzl4eRkkemeFZwUGOtrY4JawBLcYZSQ=='
+Data header: QRC01010001
+QR code has no password part!
+QR code has no timestamp part!
+
+Device Name: camera
+IP Address: 192.168.1.1
+Port: 8000
+Username: admin
+Password: admin
+$ python hik_qr_export.py decode 'DVR/NVR010001eJyL8oiq1DHQ8Q3JrvTJcjXydzap8MnytNWxMDAw0NFJLjHMNUkxD6kIdvbyMEryyAzPCg5ytLXFKWENAMsiGBk='
+Data header: DVR/NVR010001
+QR code has no password part!
+QR code has no timestamp part!
+
+Device Name: dvr
+IP Address: 192.168.1.2
+Port: 8000
+Username: admin
+Password: admin
+```
+
+The flavour is detected automatically while decoding (none of those separators is
+a part of the base64 alphabet) and is kept as is while encoding, so `renew` will
+not change the separators of your QR code.
+
+Note that a QR code without the password part has no place for the timestamp part
+either, so there is nothing to renew in it.
